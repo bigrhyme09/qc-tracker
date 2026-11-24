@@ -10,23 +10,19 @@ const DEFAULT_STYLES = [
   "BUR-REF-1704 — Relaxed French Terry Crewneck",
 ];
 
-const INITIAL_RECORDS = Object.fromEntries(
-  DEFAULT_STYLES.map((style) => [style, { approve: 0, revision: 0, reject: 0 }])
-);
+const emptyCounts = () => ({ approve: 0, revision: 0, reject: 0 });
 
 export default function App() {
   const [styles, setStyles] = useState(DEFAULT_STYLES);
   const [selectedStyle, setSelectedStyle] = useState(DEFAULT_STYLES[0]);
-  const [records, setRecords] = useState(INITIAL_RECORDS);
+  const [records, setRecords] = useState(() =>
+    Object.fromEntries(DEFAULT_STYLES.map((s) => [s, emptyCounts()]))
+  );
   const [newStyleInput, setNewStyleInput] = useState("");
 
-  const currentStats = records[selectedStyle] || {
-    approve: 0,
-    revision: 0,
-    reject: 0,
-  };
+  const currentStats = records[selectedStyle] || emptyCounts();
 
-  const updateCount = (category) => {
+  const updateCount = (category) =>
     setRecords((prev) => ({
       ...prev,
       [selectedStyle]: {
@@ -34,58 +30,43 @@ export default function App() {
         [category]: prev[selectedStyle][category] + 1,
       },
     }));
-  };
 
-  const handleApprove = () => updateCount("approve");
-  const handleRevision = () => updateCount("revision");
-  const handleReject = () => updateCount("reject");
-
-  const handleReset = () => {
-    setRecords((prev) => ({
-      ...prev,
-      [selectedStyle]: { approve: 0, revision: 0, reject: 0 },
-    }));
-  };
+  const handleReset = () =>
+    setRecords((prev) => ({ ...prev, [selectedStyle]: emptyCounts() }));
 
   const handleAddStyle = (e) => {
     e.preventDefault();
     const trimmed = newStyleInput.trim();
     if (!trimmed || styles.includes(trimmed)) return;
-
     setStyles((prev) => [...prev, trimmed]);
-    setRecords((prev) => ({
-      ...prev,
-      [trimmed]: { approve: 0, revision: 0, reject: 0 },
-    }));
+    setRecords((prev) => ({ ...prev, [trimmed]: emptyCounts() }));
     setSelectedStyle(trimmed);
     setNewStyleInput("");
   };
 
   const handleRemoveStyle = () => {
     if (styles.length <= 1) return;
-
-    const updatedStyles = styles.filter((s) => s !== selectedStyle);
-    const { [selectedStyle]: _, ...remainingRecords } = records;
-
-    setStyles(updatedStyles);
-    setRecords(remainingRecords);
-    setSelectedStyle(updatedStyles[0]);
+    const updated = styles.filter((s) => s !== selectedStyle);
+    const { [selectedStyle]: _, ...remaining } = records;
+    setStyles(updated);
+    setRecords(remaining);
+    setSelectedStyle(updated[0]);
   };
 
   return (
     <>
       <div className="bg-stage" aria-hidden="true">
         <div className="ruler-top">
-          {Array.from({ length: 30 }, (_, i) => (
-            <div key={`top-${i}`} className="ruler-tick-h">
+          {Array.from({ length: 24 }, (_, i) => (
+            <div key={i} className="ruler-tick-h">
               <span>{i}&quot;</span>
             </div>
           ))}
         </div>
 
         <div className="ruler-left">
-          {Array.from({ length: 30 }, (_, i) => (
-            <div key={`left-${i}`} className="ruler-tick-v">
+          {Array.from({ length: 24 }, (_, i) => (
+            <div key={i} className="ruler-tick-v">
               <span>{i * 2.5}cm</span>
             </div>
           ))}
@@ -94,7 +75,6 @@ export default function App() {
         <div className="drafting-mark mark-1">✛ BIAS 45° / GRAINLINE</div>
         <div className="drafting-mark mark-2">✂ SEAM ALLOWANCE 1/2&quot;</div>
         <div className="drafting-mark mark-3">✛ CF / CB ALIGNMENT</div>
-
         <div className="swatch-orb orb-1" />
         <div className="swatch-orb orb-2" />
       </div>
@@ -145,9 +125,9 @@ export default function App() {
         </div>
 
         <div className="button-group">
-          <Button handleClick={handleApprove} text="Approve" />
-          <Button handleClick={handleRevision} text="Revision" />
-          <Button handleClick={handleReject} text="Reject" />
+          <Button handleClick={() => updateCount("approve")} text="Approve" />
+          <Button handleClick={() => updateCount("revision")} text="Revision" />
+          <Button handleClick={() => updateCount("reject")} text="Reject" />
           <Button handleClick={handleReset} text="Reset" variant="reset" />
         </div>
 
